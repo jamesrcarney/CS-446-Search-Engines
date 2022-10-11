@@ -1,0 +1,37 @@
+## AB Breakdown
+1. Steps 1a Exists from Lines - 7 through 178. Step 1b Exists at Lines - 187 through 223.
+## Description
+
+**For Tokenization Implementation**
+1. I first passed in the file object to a function called tokenizer, which then stripped and lowercased the individual words in each line:
+ex) "The fox ran over the hill." -> ["the", "fox", "ran", "over","the","hill."]. Lowercasing the words initially made parsing much simpler, and less of a chance of running into errors.
+
+2. Then for each word, checked whether the "word" itself was an abbreviation for something else using a regular expression formula:
+(re.search("(?:[a-zA-Z]\.){2,}", words[index])), which checkes for a pattern of CHAR->PERIOD->CHAR->PERIOD grouped and having a count greater than 2.
+If that condition was met the string, the string would be stripped of it's periods, then stored as a one line string "a.b.c." -> "abc" in a return list called **ret[]**.
+
+3. For other words, I iterated through each of the characters and appended them to a blank string called **temp** which was a blank string through each
+iteration of a word. For special character cases, I would append the current **temp** to our return list, and then continue to go through the remaining characters following a similar pattern. Special characters were effectively parsed as word separators.
+
+4. For prefixes such as "Mr" and "Mrs" or "Ms", I would check if the **temp** string was in fact one of these cases, then set a variable **prefix** to it and not store, and then when a new word was able to be appended, I would also include the **prefix + "." + temp** for the return list. This was the only edge case that took a bit of time to figure out, since I wanted to be 100% certain that specific prefixes were being flagged.
+
+A tradeoff of my system would be checking by switching between RegEX and then iterating between characters, which probably affected my runtime. With a lack of experience in RegEx, I only knew specific cases in which to handle. Also in my stemming portion of the project, I used many nested if/else conditionals, when I most likely could have used only a few lines.
+
+**For StopWord Implementation**
+
+1. For the stopword removal, I took the list of tokenized words and checked for each word whether it existed in the file of stopwords. If the word did not exist, I appended to a return list called: **ret[]**. Otherwise, I would not append the word, and thus "removing" it. 
+
+2. The returned list would include ONLY non-stopping words as a result of looping through the file.
+
+For this, it only took a few lines of code, thus I don't think there were many tradeoffs in my design. The stopword implementation itself wasn't very taxing on runtime, and only saw a few hiccups when dealing with larger files.
+
+## Libraries
+
+1. The libraries I used were **re** or **RegEX** and **pyplot** for the graph output.
+
+## Dependencies
+
+1. python 3.9
+
+## To run code
+In order to compile the code just type **python hw1_tokenization.py** in the console.
