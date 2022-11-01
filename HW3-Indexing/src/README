@@ -1,0 +1,66 @@
+# Project #3 Indexing
+
+# Breakdown
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+The creation of the inverted index occurs from lines 16 to 32 in the *Indexer* function. The Query processing occurs from lines 34 to 212. Where the *process_query* function evaluates specfic inputs from the *query* function. *query* evaluates and parses the specific line given by the trainQueries.tsv file, and *process_query* function does the actual searching and lookups and returns to *query* in order to be printed.
+
+# Description
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+For the implementation of the project, I used a class to create the PostingsList, which was recommended in the project's instructions. In this class I provided a playId, sceneId, position, and all other corresponding data on location (which wasn't needed for the querying implementation). In order to build the postings list per term, I built a hashmap for each term and had a corresponding list of Posting classes (playId, sceneId, and position) that I would call from in order to build the inverted index. I tracked playId, sceneId through the json iteration, and position based on the current index of where I was in the text portion of the file. The way I achieved this was splitting the text portion of each scene and then the index of each term in the corresponding list for the position.
+
+In order to process the querying, I created a function called *query* which takes in invertedIndex, queriesFile, outputFolder. The invertedIndex was only used to pass into *process_query*, but the *query* function was used to parse each line of the queriesFile. I initialized the different components of the query into separate variables based on which index I was at in the query. I split the query on tabs, since the only terms we are worried about for single words are the tabs. I initialized the different parts of the query as followed:
+
+    queryname = list[0]
+    playscene = list[1]
+    AndOr  = list[2]
+
+And then for the remaining terms in the rest of the query are the terms for which we are searching, so I stored those in a list to pass into our *process_query* function which takes in:
+
+    newList = process_query(invertedIndex, playscene, AndOr, ret)
+
+The list returned from this was then printed line by line to the appropriate file destination based on query name stored in the previously stated variable. And this process continues for the remaining queries. This component of the project was fairly straight forward for implementation and the code block for writing to the specific output folder goes as follows:
+newList = process_query(invertedIndex, playscene, AndOr, ret)
+        
+        out = os.path.join(outputFolder, queryname + ".txt")
+        file = open(out, "w", encoding="utf-8")
+        
+        for item in newList:
+            file.write(item)
+            file.write("\n")
+        file.close()
+
+The real challenge of the implementation was the *process_query* function, which I implemented in the lines stated above. The function takes in our invertedIndex, a flag for whether play or scene, a flag for AND or OR, and finally our list of terms on which we are querying:
+
+    def process_query(invertedIndex, playscene, AndOr, terms):
+
+For my OR implementation, we were strictly looking for where two words appeared in documents regardless whether they are in the same document or not. This lookup was the simpler part of the implementation, where we are building a list of playId or sceneId in our class depending on our *playscene* flag which we had passed into the function. The returning list would be a unique list of either playId or sceneId depending on whether either of the words appeared in the documents.
+
+For my AND implementation, I had to initialize a *previously met* list in which I populated first with the playId/sceneId of the first term in the query, and then for remaining terms I had a *current* list, which would find the *previously met* intersection in order to find where both appeared in the same playId/sceneId. The key component here was to find the intersection based on what we already have versus what we currently have.
+
+Now for the most challenging component of the project was finding specific phrases in documents. For my implementation, I would pass the phrase as a term then check if I split on the space whether it was a length greater than one. If I had greater than one, I entered a nest where I split the phrase into a list. For the first term in the phrase, I set a *initial* list to the [playId/sceneId, position], and for the words in the phrase I iterated starting from 1 (the next word). The KEY component with finding the relative positions wasn't to iterate through the entire list and find where the previous == current pos + 1. It was to take the current playId/sceneId and decrement the position by the index of the current word we are at. I provided the specific block of code that does this check below:
+
+    for i in range(1, len(phrase)):
+        curr = []
+        playId = [p.playId for p in invertedIndex[phrase[i]]]
+        pos = [p.pos for p in invertedIndex[phrase[i]]]
+
+        for index in range(0, len(playId)):
+            curr.append([playId[index], pos[index]-i])
+
+For each of the next terms I checked the intersection between the *initial* and *current* and since we're just checking for tuples with the same sceneId/playId and the same position, if we didn't have the same tuples we know that the phrase doesn't exist, thus removing the index from *initial* and continuing to search through our current where the condition was met. I used this methods for each of the remaining words in the phrase from 1 to N, so we'd ensure every word in the phrase was checked, and didn't skip any words, otherwise the phrase is invalid.
+
+## Libraries
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+json, gzip, operator, os, sys
+
+## Dependencies
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+Latest version of Python
+
+## Building
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+Ensure python is installed and the project is installed.
+
+## Running
+-------------------------------------------------------------------------------------------------------------------------------------------------------
+Type: "python3 indexer.py shakespeare-scenes.json.gz trainQueries.tsv results/" in the terminal and in the folder in which the project is stored.
